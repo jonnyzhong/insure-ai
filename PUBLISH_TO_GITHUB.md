@@ -40,6 +40,20 @@ Verify that these are **NOT** listed (they should be ignored by `.gitignore`):
 git commit -m "Initial commit: InsureAI multi-agent chatbot with executive report feature"
 ```
 
+## pre-requiste (if your existing github is different)
+#1️⃣ Open Windows Credential Manager
+#Press Windows Key
+#Search: Credential Manager
+#Open it
+#Go to Windows Credentials
+#2️⃣ Find GitHub credentials
+#Look for entries like:
+#git:https://github.com
+#github.com
+#GitHub
+#3️⃣ Remove them
+#Click → Remove
+
 ## Step 5: Connect to GitHub and Push
 
 Replace `YOUR_USERNAME` with your GitHub username.

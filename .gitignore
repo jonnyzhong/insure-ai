@@ -14,6 +14,11 @@ frontend/node_modules/
 frontend/dist/
 frontend/.vite/
 
+# Docs site
+docs-site/node_modules/
+docs-site/.vitepress/dist/
+docs-site/.vitepress/cache/
+
 # IDE
 .vscode/
 .idea/

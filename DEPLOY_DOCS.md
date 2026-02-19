@@ -44,10 +44,13 @@ Press `Ctrl + C` to stop the preview server.
 
 ## Step 4: Deploy to Mintlify Cloud
 
-### Option A — Mintlify Dashboard (Recommended)
+> **Important:** Mintlify is a hosted platform — it does **not** support static export
+> (`mintlify build` does not exist). You must use Mintlify Cloud for deployment.
+
+### Mintlify Dashboard
 
 1. Go to [dashboard.mintlify.com](https://dashboard.mintlify.com)
-2. Sign up or log in
+2. Sign up or log in with GitHub
 3. Click **New Project**
 4. Connect your GitHub repository (`insure-ai`)
 5. Set the **docs directory** to `docs/`
@@ -55,54 +58,9 @@ Press `Ctrl + C` to stop the preview server.
 
 Your docs will be live at `https://your-org.mintlify.app`.
 
-Every push to `main` will auto-deploy.
-
-### Option B — Mintlify CLI Deploy
-
-```bash
-cd docs
-mintlify deploy
-```
-
-Follow the prompts to authenticate and select your project.
-
-### Option C — Self-Host as Static Site
-
-If you prefer to host on Vercel, Netlify, or GitHub Pages:
-
-```bash
-cd docs
-mintlify build --output ../docs-dist
-```
-
-Then deploy the `docs-dist/` folder to your preferred static hosting provider.
-
-#### GitHub Pages
-
-1. Push `docs-dist/` to a `gh-pages` branch:
-   ```bash
-   git subtree push --prefix docs-dist origin gh-pages
-   ```
-2. Go to GitHub → Repository → Settings → Pages
-3. Set source to `gh-pages` branch
-
-#### Vercel
-
-1. Import the repository on [vercel.com](https://vercel.com)
-2. Set **Root Directory** to `docs/`
-3. Set **Build Command** to `mintlify build`
-4. Set **Output Directory** to `.output`
-
-#### Netlify
-
-1. Import the repository on [netlify.com](https://netlify.com)
-2. Set **Base Directory** to `docs/`
-3. Set **Build Command** to `mintlify build`
-4. Set **Publish Directory** to `docs/.output`
+Every push to `main` will auto-deploy automatically.
 
 ## Step 5: Custom Domain (Optional)
-
-If using Mintlify Cloud:
 
 1. Go to your Mintlify Dashboard → Settings → Custom Domain
 2. Add your domain (e.g., `docs.insure-ai.com`)
@@ -123,7 +81,7 @@ After deployment, verify these pages load correctly:
 
 ## Updating Documentation
 
-After initial deployment, any changes pushed to `main` will auto-deploy (Mintlify Cloud) or require a rebuild (self-hosted).
+After initial deployment, any changes pushed to `main` will auto-deploy:
 
 ```bash
 # Edit a docs page
@@ -133,11 +91,19 @@ git commit -m "Update documentation"
 git push origin main
 ```
 
-## Deployment Options Summary
+## Alternative: If You Need Free Self-Hosted Docs
 
-| Method | Cost | Auto-Deploy | Custom Domain | Setup Time |
-|--------|------|-------------|---------------|------------|
-| Mintlify Cloud | Free tier available | Yes | Yes (paid) | 5 min |
-| Vercel | Free tier | Yes | Yes (free) | 15 min |
-| Netlify | Free tier | Yes | Yes (free) | 15 min |
-| GitHub Pages | Free | Manual | Yes (free) | 20 min |
+Mintlify Cloud requires a paid plan for private repos. If you need a fully free,
+self-hosted solution, consider migrating the `.mdx` content to one of these
+static site generators:
+
+| Tool | GitHub Pages | Build Command | Notes |
+|------|-------------|---------------|-------|
+| [VitePress](https://vitepress.dev) | Yes | `vitepress build` | Vue-based, Markdown, fast |
+| [Docusaurus](https://docusaurus.io) | Yes | `docusaurus build` | React-based, MDX support |
+| [Nextra](https://nextra.site) | Yes | `next build` | Next.js-based, MDX |
+| [Starlight](https://starlight.astro.build) | Yes | `astro build` | Astro-based, lightweight |
+
+These all produce static HTML that can be deployed to GitHub Pages, Vercel, or Netlify for free.
+The `.mdx` content from the `docs/` folder can be reused with minor syntax adjustments
+(Mintlify-specific components like `<CardGroup>`, `<Steps>`, `<Accordion>` would need replacement).
