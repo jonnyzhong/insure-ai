@@ -1,0 +1,110 @@
+---
+title: "Configuration"
+description: "How to configure InsureAI for your environment"
+---
+
+# Configuration
+
+InsureAI uses environment variables for secrets and hardcoded defaults for development settings.
+
+## Environment File
+
+Create a `.env` file in the **project root** (not inside `backend/` or `frontend/`):
+
+```bash
+cp .env.example .env
+```
+
+The `.env` file is loaded by both the backend API server and the LangGraph agent.
+
+```env
+OPENAI_API_KEY=sk-your-openai-key-here
+LANGSMITH_API_KEY=your-langsmith-key-here
+```
+
+<Warning>
+  Never commit `.env` to version control. It is already included in `.gitignore`.
+</Warning>
+
+## Backend Configuration
+
+### API Server
+
+The FastAPI server is configured in `backend/api.py`:
+
+| Setting | Default | Location |
+|---------|---------|----------|
+| Server port | `8000` | CLI argument: `--port 8000` |
+| Auto-reload | Enabled | CLI argument: `--reload` |
+| CORS origins | `localhost:5173`, `localhost:3000` | `api.py` line 34 |
+| Database path | `backend/db/insurance_support.db` | `api.py` line 28 |
+
+### LLM Model
+
+The LLM model is configured in `backend/agent_supervisor.py`:
+
+```python
+llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+```
+
+To change the model, edit this line. Supported models include:
+- `gpt-4o-mini` (default — fast, cost-effective)
+- `gpt-4o` (more capable, higher cost)
+- `gpt-4-turbo` (previous generation)
+
+<Note>
+  The guardrail (`guardrails.py`) and report generator (`report.py`) each create their own `ChatOpenAI` instance with the same `gpt-4o-mini` model. Update all three if switching models.
+</Note>
+
+### CORS Configuration
+
+To add additional frontend origins, edit `backend/api.py`:
+
+```python
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:3000",
+        # Add your production URL here
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+```
+
+## Frontend Configuration
+
+### API Base URL
+
+The Axios client in `frontend/src/api/client.ts` sets the backend URL:
+
+```typescript
+const client = axios.create({
+  baseURL: "http://localhost:8000",
+  headers: { "Content-Type": "application/json" },
+});
+```
+
+To change the backend URL (e.g., for production), update the `baseURL` value.
+
+### React Query
+
+Query caching is configured in `frontend/src/App.tsx`:
+
+```typescript
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: { retry: 1, staleTime: 5 * 60 * 1000 },  // 5 min cache
+  },
+});
+```
+
+### Vite Dev Server
+
+The Vite development server runs on port `5173` by default. To change it, edit `frontend/vite.config.ts` or use the CLI:
+
+```bash
+npm run dev -- --port 3000
+```
