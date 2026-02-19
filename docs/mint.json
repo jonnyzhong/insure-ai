@@ -18,7 +18,7 @@
   "topbarLinks": [
     {
       "name": "GitHub",
-      "url": "https://github.com/YOUR_USERNAME/insure-ai"
+      "url": "https://github.com/jonnyzhong/insure-ai"
     }
   ],
   "topbarCtaButton": {
@@ -39,7 +39,7 @@
     {
       "name": "GitHub",
       "icon": "github",
-      "url": "https://github.com/YOUR_USERNAME/insure-ai"
+      "url": "https://github.com/jonnyzhong/insure-ai"
     }
   ],
   "navigation": [
@@ -123,6 +123,6 @@
     }
   ],
   "footerSocials": {
-    "github": "https://github.com/YOUR_USERNAME/insure-ai"
+    "github": "https://github.com/jonnyzhong/insure-ai"
   }
 }
