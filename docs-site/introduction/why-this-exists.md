@@ -1,0 +1,69 @@
+# Why InsureAI Exists
+
+## The Problem
+
+Insurance customer support faces several persistent challenges:
+
+<details>
+<summary>High Volume, Repetitive Queries</summary>
+
+80% of customer inquiries are routine: "What's my policy status?", "When is my bill due?", "How do I file a claim?" These don't require human expertise but still consume agent time.
+
+</details>
+
+<details>
+<summary>Domain Complexity</summary>
+
+Insurance involves multiple domains — policies, billing, claims, vehicles, regulations. A single human agent must context-switch between all of these, leading to longer handle times and errors.
+
+</details>
+
+<details>
+<summary>Data Security Concerns</summary>
+
+Customers should only access their own data. Traditional chatbots often lack fine-grained access control at the data layer.
+
+</details>
+
+<details>
+<summary>Limited Self-Service</summary>
+
+Customers can't generate consolidated views of their insurance portfolio without calling support and waiting for manual reports.
+
+</details>
+
+## The Solution
+
+InsureAI addresses each of these problems with a **multi-agent architecture**:
+
+| Problem | Solution |
+|---------|----------|
+| Repetitive queries | Automated agents handle routine questions 24/7 |
+| Domain complexity | Five specialist agents, each expert in one domain |
+| Data security | Three-layer guardrail + tool-level ownership checks |
+| Limited self-service | One-click Executive Summary Report with AI narrative |
+
+## Why Multi-Agent?
+
+A single monolithic LLM chatbot struggles with:
+
+- **Tool overload** — Too many tools confuse the model's tool selection
+- **Prompt bloat** — Domain-specific instructions for 5 areas make prompts unwieldy
+- **Error isolation** — A billing bug shouldn't affect claims handling
+
+The **supervisor pattern** solves this by:
+
+1. Keeping the routing decision simple (one LLM call with structured output)
+2. Giving each agent only the tools it needs
+3. Isolating domain logic into separate nodes
+
+## Why Singapore?
+
+The application is contextualized for the Singapore insurance market with:
+
+- **NCD** (No-Claim Discount) — up to 50% for private cars
+- **COE** (Certificate of Entitlement) — affects vehicle insurance premiums
+- **GIRO** — automated bank payment method for premiums
+- **PayNow** — instant funds transfer for claims and payments
+- **MAS** — Monetary Authority of Singapore regulatory references
+- **Singapore-specific data** — NRIC format, postal codes, HDB addresses, regional distribution

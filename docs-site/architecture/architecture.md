@@ -1,0 +1,145 @@
+# Architecture
+
+InsureAI follows a **client-server architecture** with a React SPA frontend and a FastAPI backend that orchestrates a LangGraph multi-agent workflow.
+
+## System Overview
+
+```mermaid
+graph TB
+    subgraph Frontend["Frontend (React 19 + Vite)"]
+        LP[Landing Page]
+        Login[Login Page]
+        Chat[Chat Page]
+        Report[Report Dialog]
+        Stores[Zustand Stores<br/>auth / chat / report / ui / topics]
+        API[Axios API Client]
+    end
+
+    subgraph Backend["Backend (FastAPI + Python)"]
+        Server[FastAPI Server<br/>Port 8000]
+        Guard[Guardrails<br/>Regex + LLM Filter]
+        ReportGen[Report Engine<br/>DB + LLM Narrative]
+
+        subgraph LG["LangGraph State Graph"]
+            Sup[Supervisor<br/>Router]
+            CA[Customer Agent]
+            PA[Policy Agent]
+            BA[Billing Agent]
+            CLA[Claims Agent]
+            FA[FAQ Agent]
+        end
+    end
+
+    subgraph Data["Data Layer"]
+        SQLite[(SQLite<br/>6 Tables)]
+        Chroma[(ChromaDB<br/>FAQ Vectors)]
+    end
+
+    Chat --> API
+    Report --> API
+    API -->|REST| Server
+    Server --> Guard
+    Guard -->|Allowed| LG
+    Guard -->|Blocked| Server
+    Server --> ReportGen
+    ReportGen --> SQLite
+    Sup --> CA & PA & BA & CLA & FA
+    CA & PA & BA & CLA --> SQLite
+    FA --> Chroma
+```
+
+## Request Lifecycle
+
+### Chat Message Flow
+
+```mermaid
+sequenceDiagram
+    participant F as Frontend
+    participant A as FastAPI
+    participant G as Guardrails
+    participant S as Supervisor
+    participant Ag as Agent
+    participant T as Tool
+    participant DB as SQLite
+
+    F->>A: POST /api/chat {session_id, message}
+    A->>A: Validate session
+    A->>G: validate_input(message, user, history)
+
+    alt Blocked
+        G-->>A: {valid: false, message: "..."}
+        A-->>F: {blocked: true, block_message: "..."}
+    end
+
+    G-->>A: {valid: true}
+    A->>S: graph.invoke({messages, authenticated_customer_id})
+    S->>S: Classify intent → agent name
+    S->>Ag: Route to specialist
+    Ag->>Ag: LLM decides tool calls
+    Ag->>T: Execute tool(s)
+    T->>T: Verify ownership
+    T->>DB: SQL query
+    DB-->>T: Results
+    T-->>Ag: Tool response
+    Ag->>Ag: LLM generates response
+    Ag-->>A: Final AI message
+    A->>A: Detect agent name + tool calls
+    A-->>F: {ai_message, agent_name, tool_calls}
+```
+
+### Report Generation Flow
+
+```mermaid
+sequenceDiagram
+    participant F as Frontend
+    participant A as FastAPI
+    participant R as Report Engine
+    participant DB as SQLite
+    participant LLM as GPT-4o-mini
+
+    F->>A: POST /api/report {session_id}
+    A->>A: Validate session, extract customer_id
+    A->>R: generate_report(customer_id)
+    R->>DB: get_customer_profile()
+    R->>DB: get_policy_portfolio()
+    R->>DB: get_claims_history()
+    R->>LLM: generate_executive_summary(profile, policies, claims)
+    LLM-->>R: {account_status, portfolio_narrative, key_findings}
+    R-->>A: Full report JSON
+    A-->>F: ExecutiveReport object
+    F->>F: Render charts + sections
+```
+
+## Key Architectural Patterns
+
+### 1. Supervisor-Worker Pattern
+
+The supervisor agent doesn't process queries — it only classifies and routes. This keeps routing logic separate from domain logic.
+
+```python
+# Supervisor uses structured output for routing
+class RouterOutput(BaseModel):
+    next: Literal["customer_agent", "policy_agent", "claims_agent",
+                   "billing_agent", "faq_agent", "FINISH"]
+```
+
+### 2. Agent-Tool Loop
+
+Each agent can call tools multiple times in a loop. The graph handles this with conditional edges:
+
+```
+Agent Node → has tool_calls? → Yes → Tool Node → back to Agent Node
+                              → No  → END
+```
+
+### 3. Security-by-Default
+
+The `SecureToolNode` wrapper ensures the `authenticated_customer_id` is always available to tools, without agents needing to manage it explicitly.
+
+### 4. Session-Based State
+
+Conversation history is stored server-side in a Python dictionary. The frontend only holds the `session_id`.
+
+### 5. Report Caching
+
+The frontend Zustand store caches generated reports. Subsequent requests in the same session reuse the cached data. Cache clears on new conversation or sign-out.

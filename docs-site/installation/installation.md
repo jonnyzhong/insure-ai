@@ -1,0 +1,146 @@
+# Installation
+
+This guide covers the complete installation process for both backend and frontend.
+
+## System Requirements
+
+| Requirement | Minimum | Recommended |
+|-------------|---------|-------------|
+| Python | 3.10+ | 3.12+ |
+| Node.js | 18+ | 20+ |
+| npm | 9+ | 10+ |
+| RAM | 4 GB | 8 GB |
+| Disk Space | 500 MB | 1 GB |
+| OS | Windows 10, macOS 12, Ubuntu 20.04 | Latest versions |
+
+## Clone the Repository
+
+```bash
+git clone https://github.com/YOUR_USERNAME/insure-ai.git
+cd insure-ai
+```
+
+## Backend Installation
+
+### 1. Create a Virtual Environment
+
+::: code-group
+
+```bash [macOS / Linux]
+cd backend
+python3 -m venv venv
+source venv/bin/activate
+```
+
+```powershell [Windows (PowerShell)]
+cd backend
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+```
+
+```bash [Windows (Git Bash)]
+cd backend
+python -m venv venv
+source venv/Scripts/activate
+```
+
+:::
+
+### 2. Install Python Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+This installs:
+
+| Package | Purpose |
+|---------|---------|
+| `langgraph` | Multi-agent graph orchestration |
+| `langchain`, `langchain-core`, `langchain-openai` | LLM framework and OpenAI integration |
+| `langchain-community` | Community tool integrations |
+| `fastapi`, `uvicorn[standard]` | Web server |
+| `chromadb` | Vector database for FAQ search |
+| `pydantic` | Data validation and structured output |
+| `python-dotenv` | Environment variable loading |
+
+### 3. Initialize the Database
+
+```bash
+python db/setup.py
+```
+
+This creates `backend/db/insurance_support.db` with:
+- 1,000 synthetic customers (Singapore data)
+- ~1,500 insurance policies (Motor, Life, Health, Home, Travel)
+- ~5,000 billing records
+- ~3,500 payment records
+- ~300 claims
+- Vehicle details for motor policies
+
+::: warning
+Running `setup.py` again will **recreate** the database from scratch. Any data changes (e.g., filed claims) will be lost.
+:::
+
+### 4. Initialize the Vector Store
+
+```bash
+python -m vectordb.vector_db
+```
+
+This creates the ChromaDB collection at `backend/vectordb/chroma_faq_db/` with 22 embedded FAQ entries.
+
+## Frontend Installation
+
+```bash
+cd frontend
+npm install
+```
+
+This installs all React dependencies defined in `package.json`, including:
+
+| Package | Purpose |
+|---------|---------|
+| `react` 19 | UI framework |
+| `tailwindcss` 4 | Styling |
+| `zustand` 5 | State management |
+| `recharts` 3 | Charts for reports |
+| `axios` | HTTP client |
+| `react-router-dom` 7 | Client-side routing |
+| `framer-motion` | Animations |
+| `jspdf`, `html2canvas` | PDF export |
+| `react-markdown` | Markdown rendering |
+
+## Verify Installation
+
+### Backend
+
+```bash
+cd backend
+source venv/bin/activate
+uvicorn api:app --reload --port 8000
+```
+
+Visit `http://localhost:8000/api/health` — you should see:
+
+```json
+{"status": "ok", "db_exists": true}
+```
+
+### Frontend
+
+```bash
+cd frontend
+npm run dev
+```
+
+Visit `http://localhost:5173` — you should see the landing page.
+
+### Build Check
+
+```bash
+cd frontend
+npm run build
+```
+
+A successful build confirms there are no TypeScript or compilation errors.

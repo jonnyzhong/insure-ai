@@ -1,0 +1,60 @@
+# Environment Variables
+
+All environment variables are defined in a single `.env` file at the project root.
+
+## Required Variables
+
+**`OPENAI_API_KEY`** (`string`, required) — Your OpenAI API key. Used by:
+- **Supervisor Agent** — Intent classification and routing
+- **Specialist Agents** — Tool-calling and response generation
+- **Guardrails** — Semantic input validation
+- **Report Engine** — Executive summary narrative generation
+
+Get your key at [platform.openai.com/api-keys](https://platform.openai.com/api-keys).
+
+```env
+OPENAI_API_KEY=sk-proj-abc123...
+```
+
+## Optional Variables
+
+**`LANGSMITH_API_KEY`** (`string`) — LangSmith API key for tracing and debugging agent workflows. When set, all LangGraph invocations are logged to your LangSmith dashboard.
+
+Get your key at [smith.langchain.com](https://smith.langchain.com/).
+
+```env
+LANGSMITH_API_KEY=lsv2_pt_abc123...
+```
+
+## .env.example
+
+The repository includes a `.env.example` template:
+
+```env
+OPENAI_API_KEY=your_key_here
+LANGSMITH_API_KEY=your_key_here
+```
+
+## How Variables Are Loaded
+
+The backend loads environment variables using `python-dotenv` at startup:
+
+```python
+from dotenv import load_dotenv
+load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".env"))
+```
+
+This resolves to the `.env` file in the project root, regardless of the working directory.
+
+## Security
+
+| Practice | Status |
+|----------|--------|
+| `.env` in `.gitignore` | Yes |
+| `.env.example` committed (no real keys) | Yes |
+| Keys used server-side only | Yes |
+| Keys never sent to frontend | Yes |
+
+::: warning
+Never expose your `OPENAI_API_KEY` in frontend code, commit messages, or logs.
+:::

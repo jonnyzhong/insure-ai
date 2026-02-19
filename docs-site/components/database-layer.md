@@ -1,0 +1,184 @@
+# Database Layer
+
+InsureAI uses two data stores: **SQLite** for structured customer data and **ChromaDB** for FAQ vector search.
+
+## SQLite Database
+
+**Location:** `backend/db/insurance_support.db` (generated, git-ignored)
+
+### Schema
+
+```mermaid
+erDiagram
+    CUSTOMERS ||--o{ POLICIES : "has"
+    POLICIES ||--o| AUTO_POLICY_DETAILS : "has (Motor only)"
+    POLICIES ||--o{ BILLING : "generates"
+    POLICIES ||--o{ CLAIMS : "has"
+    BILLING ||--o{ PAYMENTS : "receives"
+
+    CUSTOMERS {
+        string customer_id PK
+        string nric
+        string first_name
+        string last_name
+        string email
+        string phone
+        date date_of_birth
+        string address
+        string postal_code
+        string region
+    }
+
+    POLICIES {
+        string policy_number PK
+        string customer_id FK
+        string policy_type
+        date start_date
+        decimal premium_amount
+        string billing_frequency
+        string status
+    }
+
+    AUTO_POLICY_DETAILS {
+        string policy_number PK_FK
+        string vehicle_vin
+        string vehicle_make
+        string vehicle_model
+        int vehicle_year
+        string license_plate
+        string coverage_type
+        decimal deductible
+        decimal liability_limit
+    }
+
+    BILLING {
+        string bill_id PK
+        string policy_number FK
+        date billing_date
+        date due_date
+        decimal amount
+        string status
+    }
+
+    PAYMENTS {
+        string payment_id PK
+        string bill_id FK
+        date payment_date
+        decimal amount
+        string status
+        string payment_method
+    }
+
+    CLAIMS {
+        string claim_id PK
+        string policy_number FK
+        date claim_date
+        decimal claim_amount
+        string status
+        text description
+    }
+```
+
+### Table Details
+
+| Table | ~Records | Key Columns | Notes |
+|-------|----------|-------------|-------|
+| `customers` | 1,000 | customer_id, nric, email, region | Singapore NRIC format, realistic addresses |
+| `policies` | ~1,500 | policy_number, customer_id, policy_type, status | Motor, Life, Health, Home, Travel |
+| `auto_policy_details` | Motor only | vehicle_vin, make, model, license_plate | Singapore plate format |
+| `billing` | ~5,000 | bill_id, due_date, status | Paid, Pending, Overdue |
+| `payments` | ~3,500 | payment_method, status | PayNow, GIRO, Credit Card, Bank Transfer |
+| `claims` | ~300 | claim_amount, status, description | Pending, Approved, Rejected, Settled |
+
+### Referential Integrity
+
+| Relationship | ON DELETE | ON UPDATE |
+|-------------|-----------|-----------|
+| customers → policies | RESTRICT | CASCADE |
+| policies → auto_policy_details | CASCADE | CASCADE |
+| policies → billing | RESTRICT | CASCADE |
+| policies → claims | RESTRICT | CASCADE |
+| billing → payments | CASCADE | CASCADE |
+
+### Data Generation
+
+Run `python db/setup.py` from the `backend/` directory to generate all synthetic data:
+
+```bash
+cd backend
+python db/setup.py
+```
+
+The generator creates Singapore-specific data:
+
+| Data Type | Details |
+|-----------|---------|
+| **Names** | Mix of Chinese, Malay, Indian, Western Singapore names |
+| **NRIC** | Format: `S/T` + 7 digits + letter |
+| **Addresses** | HDB blocks with Singapore postal codes |
+| **Regions** | Central, East, West, North, North-East |
+| **Vehicles** | Toyota, Honda, BMW, Mercedes with Singapore plates |
+| **Payment Methods** | PayNow, GIRO, Credit Card, Bank Transfer |
+
+### Connection Pattern
+
+All tools use a shared connection pattern:
+
+```python
+DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "db", "insurance_support.db")
+
+def get_conn():
+    return sqlite3.connect(DB_PATH)
+
+def dict_factory(cursor, row):
+    d = {}
+    for idx, col in enumerate(cursor.description):
+        d[col[0]] = row[idx]
+    return d
+```
+
+Each tool opens a connection, sets `row_factory = dict_factory` for dictionary results, and closes in a `finally` block.
+
+---
+
+## ChromaDB Vector Store
+
+**Location:** `backend/vectordb/chroma_faq_db/` (generated, git-ignored)
+
+### Initialization
+
+```bash
+cd backend
+python -m vectordb.vector_db
+```
+
+This reads `vectordb/faq_data.json` (22 FAQ entries) and stores them in a persistent ChromaDB collection with embeddings.
+
+### FAQ Data
+
+The knowledge base covers Singapore insurance topics:
+
+| Category | Example Questions |
+|----------|------------------|
+| Motor Insurance | "What is motor insurance?", "What is TPO?" |
+| Singapore Terms | "What is NCD?", "What is COE?", "What is GIRO?" |
+| Payments | "What is PayNow?", "What payment methods are accepted?" |
+| Regulations | "What is MAS?", "What is GIA?" |
+| General | "What is a deductible?", "How is my premium calculated?" |
+| Claims | "How do I file a claim?", "How long does processing take?" |
+| Coverage Types | "What is comprehensive coverage?", "What is health insurance?" |
+| Government | "Can I use CPF for insurance?", "What is DPS?", "What is Singpass?" |
+
+### Search Tool
+
+The `search_faq` tool in `rag_tools.py` performs cosine similarity search:
+
+```python
+@tool
+def search_faq(query: str):
+    """Search the insurance FAQ knowledge base for relevant answers."""
+    results = collection.query(query_texts=[query], n_results=3)
+    return results["documents"][0]
+```
+
+Returns the top 3 most relevant FAQ answers for the given query.

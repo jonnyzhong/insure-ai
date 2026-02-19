@@ -1,0 +1,121 @@
+# Folder Structure
+
+## Project Root
+
+```
+insure-ai/
+├── .env.example              # Environment variable template (safe to commit)
+├── .env                      # Actual secrets (git-ignored)
+├── .gitignore                # Git ignore rules
+├── README.md                 # Project README
+├── PUBLISH_TO_GITHUB.md      # GitHub publishing guide
+├── docs/                     # This documentation (Mintlify)
+├── backend/                  # Python FastAPI + LangGraph backend
+└── frontend/                 # React + TypeScript + Vite frontend
+```
+
+## Backend
+
+```
+backend/
+├── api.py                    # FastAPI server — 6 REST endpoints, session store, CORS
+├── agent_supervisor.py       # LangGraph StateGraph — supervisor + 5 agents + tool nodes
+├── guardrails.py             # Input validation — regex pre-filter + LLM semantic guard
+├── report.py                 # Executive report — DB queries + LLM narrative generation
+│
+├── customer_tools.py         # Tool: lookup_customer (email → profile)
+├── policy_tools.py           # Tools: get_customer_policies, get_policy_details
+├── billing_tools.py          # Tool: get_billing_history
+├── claims_tools.py           # Tools: get_customer_claims, check_claim_status, file_new_claim
+├── auto_tools.py             # Tool: get_vehicle_details (motor policies)
+├── rag_tools.py              # Tool: search_faq (ChromaDB semantic search)
+│
+├── requirements.txt          # Python dependencies
+│
+├── db/
+│   ├── setup.py              # Database schema + synthetic data generator (1,000 customers)
+│   ├── database.py           # SQLite connection manager utility
+│   ├── er_diagram.md         # Entity relationship diagram (Mermaid + ASCII)
+│   └── insurance_support.db  # SQLite database file (git-ignored, generated)
+│
+└── vectordb/
+    ├── vector_db.py          # ChromaDB initialization — embeds FAQ data
+    ├── faq_data.json         # 22 Singapore insurance FAQs (source data)
+    └── chroma_faq_db/        # ChromaDB persistent storage (git-ignored, generated)
+```
+
+### File Roles
+
+| File | Lines | Role |
+|------|-------|------|
+| `api.py` | ~277 | HTTP layer — receives requests, runs guardrails, invokes graph, returns responses |
+| `agent_supervisor.py` | ~185 | Core orchestration — defines the state graph, nodes, edges, routing |
+| `guardrails.py` | ~110 | Security — blocks off-topic, injection, and unauthorized data queries |
+| `report.py` | ~182 | Reporting — assembles data + LLM narrative into structured JSON |
+| `*_tools.py` | ~60-130 each | Domain tools — each contains Pydantic input schemas, ownership checks, SQL queries |
+| `db/setup.py` | ~356 | Data generation — creates realistic Singapore insurance data |
+
+## Frontend
+
+```
+frontend/
+├── package.json              # npm dependencies and scripts
+├── vite.config.ts            # Vite build configuration
+├── tsconfig.json             # TypeScript configuration
+├── index.html                # HTML entry point
+│
+└── src/
+    ├── App.tsx               # React Router — 3 routes (/, /login, /chat)
+    ├── main.tsx              # React DOM entry point
+    ├── index.css             # Tailwind CSS + print styles
+    ├── vite-env.d.ts         # Vite type declarations
+    │
+    ├── api/                  # API client layer
+    │   ├── client.ts         # Axios instance (baseURL: localhost:8000)
+    │   ├── authApi.ts        # getUsers(), loginUser()
+    │   ├── chatApi.ts        # sendMessage(), clearHistory()
+    │   └── reportApi.ts      # generateReport()
+    │
+    ├── types/
+    │   └── index.ts          # All TypeScript interfaces (User, Message, Report, etc.)
+    │
+    ├── stores/               # Zustand state management
+    │   ├── authStore.ts      # user, sessionId, isAuthenticated, login(), logout()
+    │   ├── chatStore.ts      # messages[], addMessage(), setTyping(), clearMessages()
+    │   ├── reportStore.ts    # report, isOpen, isLoading, error, setReport(), reset()
+    │   ├── topicsStore.ts    # Suggested topics config with localStorage persistence
+    │   └── uiStore.ts        # sidebarOpen, setSidebarOpen()
+    │
+    ├── pages/
+    │   ├── LandingPage.tsx   # Marketing landing page
+    │   ├── LoginPage.tsx     # User combobox + login flow
+    │   └── ChatPage.tsx      # Main chat interface + report integration
+    │
+    ├── components/
+    │   ├── auth/             # UserCombobox, UserPreviewCard
+    │   ├── chat/             # ChatContainer, ChatInput, MessageBubble, AgentBadge,
+    │   │                     # AgentTracePanel, GuardrailNotice, ChatSidebar,
+    │   │                     # QuickActions, TopicSettingsDialog, TypingIndicator
+    │   ├── report/           # ReportDialog, ReportHeader, ReportContent, ReportSkeleton,
+    │   │   │                 # pdfExport.ts
+    │   │   └── sections/     # ExecutiveSummarySection, CustomerProfileSection,
+    │   │                     # PolicyPortfolioSection, ClaimsHistorySection
+    │   ├── landing/          # HeroSection, FeaturesSection, TrustBar, CTASection
+    │   ├── layout/           # Header, Footer, SkipLink
+    │   ├── common/           # ThemeToggle
+    │   └── ui/               # shadcn/ui primitives (button, card, dialog, badge, etc.)
+    │
+    └── lib/
+        └── utils.ts          # cn() utility for Tailwind class merging
+```
+
+### Component Count
+
+| Directory | Components | Purpose |
+|-----------|-----------|---------|
+| `components/chat/` | 10 | Chat interface elements |
+| `components/report/` | 5 + 4 sections | Report modal and sections |
+| `components/auth/` | 2 | Login flow |
+| `components/landing/` | 4 | Landing page sections |
+| `components/layout/` | 3 | App shell |
+| `components/ui/` | ~15 | shadcn/ui primitives |

@@ -1,0 +1,165 @@
+# Tutorials
+
+## Tutorial 1: Adding a New Tool
+
+This tutorial walks through adding a new tool to an existing agent.
+
+### Goal
+
+Add a `cancel_policy` tool to the Policy Agent that allows users to request policy cancellation.
+
+### Step 1: Create the Tool
+
+Add to `backend/policy_tools.py`:
+
+```python
+class CancelPolicyInput(BaseModel):
+    policy_number: str = Field(description="The Policy Number (e.g., POL-001)")
+    reason: str = Field(description="Reason for cancellation")
+
+@tool(args_schema=CancelPolicyInput)
+def cancel_policy(policy_number: str, reason: str, config: RunnableConfig = None):
+    """Submits a policy cancellation request. The policy will be marked as Pending Cancellation."""
+    auth_id = (config or {}).get("configurable", {}).get("authenticated_customer_id", "")
+
+    conn = get_conn()
+    conn.row_factory = dict_factory
+    try:
+        # Ownership check
+        owner = conn.execute(
+            "SELECT customer_id FROM policies WHERE policy_number = ?",
+            (policy_number,)
+        ).fetchone()
+        if not owner:
+            return {"status": "error", "msg": f"Policy {policy_number} not found."}
+        if auth_id and owner.get("customer_id") != auth_id:
+            return {"status": "denied", "msg": "Access denied."}
+
+        conn.execute(
+            "UPDATE policies SET status = 'Pending Cancellation' WHERE policy_number = ?",
+            (policy_number,)
+        )
+        conn.commit()
+        return {"status": "success", "msg": f"Cancellation request submitted for {policy_number}."}
+    finally:
+        conn.close()
+```
+
+### Step 2: Register with the Agent
+
+In `backend/agent_supervisor.py`, add the import and bind to the policy agent:
+
+```python
+from policy_tools import get_customer_policies, get_policy_details, cancel_policy
+
+def policy_agent_node(state: AgentState):
+    agent = llm.bind_tools([get_customer_policies, get_policy_details,
+                            get_vehicle_details, cancel_policy])
+    res = agent.invoke(state["messages"])
+    return {"messages": [res]}
+```
+
+### Step 3: Update the Tool Node
+
+```python
+workflow.add_node("policy_tools", SecureToolNode([
+    get_customer_policies, get_policy_details, get_vehicle_details, cancel_policy
+]))
+```
+
+### Step 4: Update AGENT_MAP
+
+In `backend/api.py`:
+
+```python
+AGENT_MAP = {
+    ...
+    "cancel_policy": "Policy Agent",
+}
+```
+
+### Step 5: Test
+
+```bash
+# Restart the backend
+uvicorn api:app --reload --port 8000
+```
+
+Then in the chat: "I want to cancel my motor policy"
+
+---
+
+## Tutorial 2: Adding a New FAQ Entry
+
+### Step 1: Edit the FAQ Data
+
+Add a new entry to `backend/vectordb/faq_data.json`:
+
+```json
+{
+  "question": "What is roadside assistance?",
+  "answer": "Roadside assistance is an optional add-on for motor insurance policies that provides help if your vehicle breaks down. Services typically include towing, battery jump-start, tire change, and lockout assistance."
+}
+```
+
+### Step 2: Re-initialize the Vector Store
+
+```bash
+cd backend
+python -m vectordb.vector_db
+```
+
+### Step 3: Test
+
+Restart the backend and ask: "What is roadside assistance?"
+
+---
+
+## Tutorial 3: Customizing the Supervisor Prompt
+
+### Goal
+
+Add a routing rule so that "complain" or "feedback" messages route to a specific agent.
+
+### Edit the Supervisor Prompt
+
+In `backend/agent_supervisor.py`, update the `system_prompt` in `supervisor_node`:
+
+```python
+system_prompt = """
+You are the Insurance Supervisor. Route based on intent:
+
+...existing rules...
+
+6. 'customer_agent': Customer complaints, feedback, or service issues.
+
+ROUTING RULES:
+...existing rules...
+- If user says "I want to complain" or "give feedback", route to 'customer_agent'.
+"""
+```
+
+No code changes needed beyond the prompt — the supervisor's structured output will route accordingly.
+
+---
+
+## Tutorial 4: Adding a Frontend Quick Action
+
+### Goal
+
+Add a "Cancel Policy" quick action button.
+
+### Edit the Topics Store
+
+The simplest way is through the UI: click the gear icon next to "Suggested Topics" in the sidebar, then add a new topic.
+
+For a code-level default, edit the default topics array in `frontend/src/stores/topicsStore.ts`:
+
+```typescript
+const DEFAULT_TOPICS = [
+  { label: "My Policies", prompt: "Show my policies" },
+  { label: "Billing", prompt: "Check my billing" },
+  { label: "My Claims", prompt: "What claims do I have?" },
+  { label: "Cancel Policy", prompt: "I want to cancel a policy" },  // New
+];
+```

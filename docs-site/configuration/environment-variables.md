@@ -1,0 +1,80 @@
+# Environment Variables
+
+## Variable Reference
+
+| Variable | Required | Used By | Description |
+|----------|----------|---------|-------------|
+| `OPENAI_API_KEY` | **Yes** | Supervisor, agents, guardrails, report engine | OpenAI API key for GPT-4o-mini |
+| `LANGSMITH_API_KEY` | No | LangGraph tracing | LangSmith key for workflow debugging |
+
+## OPENAI_API_KEY
+
+**Required.** This key is used for all LLM operations:
+
+| Operation | Module | Calls/Request |
+|-----------|--------|---------------|
+| Supervisor routing | `agent_supervisor.py` | 1 per message |
+| Agent tool-calling + response | `agent_supervisor.py` | 1-3 per message |
+| Guardrail validation | `guardrails.py` | 1 per message |
+| Report narrative | `report.py` | 1 per report |
+
+**Estimated cost per chat message:** ~$0.001-0.003 (GPT-4o-mini pricing)
+**Estimated cost per report:** ~$0.002-0.005
+
+### Getting an API Key
+
+1. Go to [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
+2. Click **Create new secret key**
+3. Copy the key (starts with `sk-`)
+4. Add to `.env`:
+   ```env
+   OPENAI_API_KEY=sk-proj-abc123...
+   ```
+
+## LANGSMITH_API_KEY
+
+**Optional.** Enables [LangSmith](https://smith.langchain.com/) tracing for debugging agent workflows.
+
+When set, you can:
+- View the full LangGraph execution trace for each message
+- See supervisor routing decisions
+- Inspect tool call inputs and outputs
+- Measure latency per node
+
+### Getting a LangSmith Key
+
+1. Go to [smith.langchain.com](https://smith.langchain.com/)
+2. Create an account or log in
+3. Go to **Settings** → **API Keys**
+4. Create a new key
+5. Add to `.env`:
+   ```env
+   LANGSMITH_API_KEY=lsv2_pt_abc123...
+   ```
+
+## File Location
+
+The `.env` file must be in the **project root** (same level as `backend/` and `frontend/`):
+
+```
+insure-ai/
+├── .env          ← here
+├── .env.example
+├── backend/
+└── frontend/
+```
+
+Both `api.py` and `agent_supervisor.py` load it relative to the project root:
+
+```python
+load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".env"))
+```
+
+## Validation
+
+If `OPENAI_API_KEY` is missing or invalid, you'll see errors when:
+- Logging in (the silent "Who am I?" query fails)
+- Sending a chat message
+- Generating a report
+
+The error message will be: `"System error: ..."` with an OpenAI authentication error.

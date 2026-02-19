@@ -1,0 +1,212 @@
+# Examples
+
+## Chat Examples
+
+### Policy Query
+
+**Input:**
+```
+What policies do I have?
+```
+
+**Output:**
+```
+You have 2 active policies:
+
+1. **POL-001** (Motor Insurance)
+   - Status: Active
+   - Premium: SGD 1,200.00/year
+   - Start Date: 2023-01-15
+
+2. **POL-002** (Health Insurance)
+   - Status: Active
+   - Premium: SGD 800.00/year
+   - Start Date: 2023-06-01
+```
+
+**Agent:** Policy Agent
+**Tools Called:** `get_customer_policies(customer_id="CUST001")`
+
+---
+
+### Vehicle Details Query
+
+**Input:**
+```
+What car is covered under my motor policy?
+```
+
+**Output:**
+```
+Your motor policy POL-001 covers the following vehicle:
+
+- **Make:** Toyota
+- **Model:** Corolla
+- **Year:** 2022
+- **VIN:** 1HGCM82633A123456
+- **License Plate:** SBA1234A
+- **Coverage Type:** Comprehensive
+- **Deductible:** SGD 500.00
+- **Liability Limit:** SGD 100,000.00
+```
+
+**Agent:** Policy Agent
+**Tools Called:** `get_vehicle_details(policy_number="POL-001")`
+
+---
+
+### Billing Query
+
+**Input:**
+```
+Do I owe anything?
+```
+
+**Output:**
+```
+Here's your billing summary:
+
+**Overdue:**
+- BILL-042 | Due: 2024-05-15 | Amount: SGD 400.00 | Status: Overdue
+
+**Upcoming:**
+- BILL-043 | Due: 2024-07-15 | Amount: SGD 400.00 | Status: Pending
+
+All other bills are paid. Would you like to make a payment for the overdue bill?
+```
+
+**Agent:** Billing Agent
+**Tools Called:** `get_billing_history(customer_id="CUST001")`
+
+---
+
+### FAQ Query
+
+**Input:**
+```
+What is NCD?
+```
+
+**Output:**
+```
+No Claim Discount (NCD) is an entitlement given to you if you have not made
+any claims for a year or more. In Singapore, it can go up to 50% for private
+cars (10% per year). This means if you drive safely without claims, your
+premium can be significantly reduced over time.
+```
+
+**Agent:** FAQ Agent
+**Tools Called:** `search_faq(query="What is NCD?")`
+
+---
+
+### Guardrail Block
+
+**Input:**
+```
+Write me a poem about cats
+```
+
+**Output:**
+```
+🛡️ Request Blocked
+
+I'm sorry, but I can only assist with insurance-related questions. I can help
+you with your policies, billing, claims, or answer general insurance questions.
+
+Try asking:
+- "What policies do I have?"
+- "Do I owe anything?"
+- "What is NCD?"
+```
+
+---
+
+## API Call Examples
+
+### Full Login → Chat → Report Flow
+
+```bash
+# 1. Login
+SESSION=$(curl -s -X POST http://localhost:8000/api/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "john.doe@email.com"}' | jq -r '.session_id')
+
+echo "Session: $SESSION"
+
+# 2. Chat
+curl -s -X POST http://localhost:8000/api/chat \
+  -H "Content-Type: application/json" \
+  -d "{\"session_id\": \"$SESSION\", \"message\": \"What policies do I have?\"}" | jq .
+
+# 3. Generate Report
+curl -s -X POST http://localhost:8000/api/report \
+  -H "Content-Type: application/json" \
+  -d "{\"session_id\": \"$SESSION\"}" | jq .
+
+# 4. Clear History
+curl -s -X DELETE "http://localhost:8000/api/chat/history?session_id=$SESSION" | jq .
+```
+
+---
+
+## Report Output Example
+
+```json
+{
+  "report_metadata": {
+    "report_title": "Customer Insurance Report",
+    "generation_date": "2024-06-15",
+    "customer_id": "CUST001"
+  },
+  "executive_summary": {
+    "account_status": "Active",
+    "portfolio_narrative": "John Doe maintains an active insurance portfolio with comprehensive motor and health coverage. His payment history shows consistent on-time payments with one overdue billing cycle that requires attention.",
+    "key_findings": [
+      "Portfolio includes 2 active policies covering Motor and Health insurance",
+      "One billing payment is currently overdue (BILL-042, SGD 400.00)",
+      "Motor policy provides comprehensive coverage with SGD 500 deductible",
+      "No Claim Discount eligibility is maintained with zero claims in the past year",
+      "Total annual premium commitment is SGD 2,000.00"
+    ]
+  },
+  "customer_profile": {
+    "name": "John Doe",
+    "nric": "S1234567A",
+    "email": "john.doe@email.com",
+    "phone": "+65 9123 4567",
+    "date_of_birth": "1989-03-15",
+    "address": {
+      "full_address": "Blk 123 Ang Mo Kio Ave 4 #08-1234",
+      "region": "Central"
+    }
+  },
+  "policy_portfolio": [
+    {
+      "policy_id": "POL-001",
+      "type": "Motor",
+      "status": "Active",
+      "start_date": "2023-01-15",
+      "premium": {
+        "amount": 1200.0,
+        "currency": "SGD",
+        "frequency": "Annually"
+      },
+      "billing_history": [
+        {"bill_id": "BILL-041", "due_date": "2024-01-15", "status": "Paid"},
+        {"bill_id": "BILL-042", "due_date": "2024-05-15", "status": "Overdue"}
+      ]
+    }
+  ],
+  "claims_history": [
+    {
+      "claim_id": "CLM001",
+      "date": "2024-05-20",
+      "associated_policy": "POL-001",
+      "amount": 2500.0,
+      "status": "Pending",
+      "description": "Rear-end collision at traffic light on Orchard Road"
+    }
+  ]
+}
+```

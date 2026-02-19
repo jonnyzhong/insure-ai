@@ -1,0 +1,286 @@
+# REST API Reference
+
+Base URL: `http://localhost:8000`
+
+## Endpoints Overview
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| `GET` | `/api/health` | Health check | No |
+| `GET` | `/api/users` | List demo users | No |
+| `POST` | `/api/login` | Authenticate user | No |
+| `POST` | `/api/chat` | Send chat message | Session |
+| `DELETE` | `/api/chat/history` | Clear conversation | Session |
+| `POST` | `/api/report` | Generate report | Session |
+
+---
+
+## `GET /api/health`
+
+Health check endpoint. Returns server status and database availability.
+
+::: code-group
+```bash [Request]
+curl http://localhost:8000/api/health
+```
+
+```json [Response (200)]
+{
+  "status": "ok",
+  "db_exists": true
+}
+```
+:::
+
+---
+
+## `GET /api/users`
+
+Returns all demo users for the login combobox. Joins `customers` and `policies` tables.
+
+::: code-group
+```bash [Request]
+curl http://localhost:8000/api/users
+```
+
+```json [Response (200)]
+{
+  "users": [
+    {
+      "email": "john.doe@email.com",
+      "displayName": "John Doe",
+      "policyType": "Motor",
+      "customerId": "CUST001",
+      "age": 35
+    },
+    {
+      "email": "jane.tan@email.com",
+      "displayName": "Jane Tan",
+      "policyType": "Health",
+      "customerId": "CUST002",
+      "age": 28
+    }
+  ]
+}
+```
+:::
+
+::: info
+A single customer may appear multiple times if they have multiple policy types.
+:::
+
+---
+
+## `POST /api/login`
+
+Authenticates a user by email. Runs a silent `"I am {email}. Who am I?"` query through the LangGraph agent to establish identity context. Returns a session ID.
+
+### Request Body
+
+**`email`** (`string`, required) — The customer's email address.
+
+::: code-group
+```bash [Request]
+curl -X POST http://localhost:8000/api/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "john.doe@email.com"}'
+```
+
+```json [Response (200)]
+{
+  "session_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "display_name": "John Doe",
+  "email": "john.doe@email.com",
+  "policy_type": "Motor",
+  "customer_id": "CUST001"
+}
+```
+
+```json [Error (404)]
+{
+  "detail": "Customer not found"
+}
+```
+:::
+
+---
+
+## `POST /api/chat`
+
+Sends a message through the guardrail filter and LangGraph agent workflow. Returns the AI response with agent metadata.
+
+### Request Body
+
+**`session_id`** (`string`, required) — Session ID from the login response.
+
+**`message`** (`string`, required) — The user's message.
+
+### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `ai_message` | string | The AI's response text |
+| `agent_name` | string \| null | Which specialist handled the query |
+| `tool_calls` | array | List of tool calls executed |
+| `blocked` | boolean | Whether the guardrail blocked the message |
+| `block_message` | string \| null | Guardrail rejection reason |
+
+::: code-group
+```bash [Request]
+curl -X POST http://localhost:8000/api/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "session_id": "a1b2c3d4-...",
+    "message": "What policies do I have?"
+  }'
+```
+
+```json [Response — Normal (200)]
+{
+  "ai_message": "You have 2 active policies:\n\n1. **POL-001** (Motor) — Premium: SGD 1,200/year\n2. **POL-002** (Health) — Premium: SGD 800/year",
+  "agent_name": "Policy Agent",
+  "tool_calls": [
+    {
+      "name": "get_customer_policies",
+      "args": {"customer_id": "CUST001"}
+    }
+  ],
+  "blocked": false,
+  "block_message": null
+}
+```
+
+```json [Response — Blocked (200)]
+{
+  "ai_message": "Request Blocked: This question is not related to insurance...",
+  "agent_name": null,
+  "tool_calls": [],
+  "blocked": true,
+  "block_message": "Request Blocked: This question is not related to insurance..."
+}
+```
+
+```json [Error (401)]
+{
+  "detail": "Invalid session. Please log in again."
+}
+```
+:::
+
+::: info
+Blocked messages return HTTP 200 (not 403) because the guardrail result is a normal application response, not an authentication failure.
+:::
+
+---
+
+## `DELETE /api/chat/history`
+
+Clears conversation history for a session and re-runs the silent login query.
+
+### Query Parameters
+
+**`session_id`** (`string`, required) — Session ID to clear.
+
+::: code-group
+```bash [Request]
+curl -X DELETE "http://localhost:8000/api/chat/history?session_id=a1b2c3d4-..."
+```
+
+```json [Response (200)]
+{
+  "status": "cleared"
+}
+```
+
+```json [Error (404)]
+{
+  "detail": "Session not found"
+}
+```
+:::
+
+---
+
+## `POST /api/report`
+
+Generates an executive summary report for the authenticated customer. Queries the database for profile, policies, billing, and claims data, then uses GPT-4o-mini to generate a narrative summary.
+
+### Request Body
+
+**`session_id`** (`string`, required) — Session ID from the login response.
+
+::: code-group
+```bash [Request]
+curl -X POST http://localhost:8000/api/report \
+  -H "Content-Type: application/json" \
+  -d '{"session_id": "a1b2c3d4-..."}'
+```
+
+```json [Response (200)]
+{
+  "report_metadata": {
+    "report_title": "Customer Insurance Report",
+    "generation_date": "2024-06-15",
+    "customer_id": "CUST001"
+  },
+  "executive_summary": {
+    "account_status": "Active",
+    "portfolio_narrative": "John Doe maintains a diversified insurance portfolio...",
+    "key_findings": [
+      "All premium payments are current with no overdue balances",
+      "One pending motor claim (CLM001) for SGD 2,500",
+      "NCD qualification maintained across all eligible policies"
+    ]
+  },
+  "customer_profile": {
+    "name": "John Doe",
+    "nric": "S1234567A",
+    "email": "john.doe@email.com",
+    "phone": "+65 9123 4567",
+    "date_of_birth": "1989-03-15",
+    "address": {
+      "full_address": "Blk 123 Ang Mo Kio Ave 4 #08-1234",
+      "region": "Central"
+    }
+  },
+  "policy_portfolio": [
+    {
+      "policy_id": "POL-001",
+      "type": "Motor",
+      "status": "Active",
+      "start_date": "2023-01-15",
+      "premium": {
+        "amount": 1200.0,
+        "currency": "SGD",
+        "frequency": "Annually"
+      },
+      "billing_history": [
+        {"bill_id": "BILL-001", "due_date": "2024-01-15", "status": "Paid"}
+      ]
+    }
+  ],
+  "claims_history": [
+    {
+      "claim_id": "CLM001",
+      "date": "2024-05-20",
+      "associated_policy": "POL-001",
+      "amount": 2500.0,
+      "status": "Pending",
+      "description": "Rear-end collision at traffic light"
+    }
+  ]
+}
+```
+
+```json [Error (401)]
+{
+  "detail": "Invalid session. Please log in again."
+}
+```
+
+```json [Error (500)]
+{
+  "detail": "Report generation failed: ..."
+}
+```
+:::
