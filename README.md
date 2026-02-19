@@ -602,6 +602,10 @@ Please ensure:
 - New tools include ownership verification checks
 
 ---
+## Author
+
+**Jonny Zhong**
+📧 [jonny.zhong@gmail.com](mailto:jonny.zhong@gmail.com)
 
 ## License
 
