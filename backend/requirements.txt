@@ -1,0 +1,13 @@
+langgraph
+langchain
+langchain-core
+langchain-openai
+langchain-community
+langgraph-cli[inmem]
+python-dotenv
+pydantic
+typing_extensions>=4.15.0
+chromadb
+fastapi
+uvicorn[standard]
+python-multipart

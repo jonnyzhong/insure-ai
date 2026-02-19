@@ -1,0 +1,19 @@
+# Environment
+.env
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# Generated data
+backend/db/insurance_support.db
+backend/vectordb/chroma_faq_db/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# IDE
+.vscode/
+.idea/

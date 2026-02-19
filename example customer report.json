@@ -1,0 +1,71 @@
+{
+  "report_metadata": {
+    "report_title": "Customer Insurance Report",
+    "generation_date": "2026-02-18",
+    "customer_id": "CUST00845"
+  },
+  "executive_summary": {
+    "account_status": "Inactive",
+    "portfolio_narrative": "Yan Nair was an active customer with both home and health policies[cite: 73]. Both policies have since been terminated.",
+    "key_findings": [
+      "The home policy shows strong consistent payment behavior and no claims.",
+      "The health policy shows some inconsistent billing behavior but one significant claim that was fully settled[cite: 75]."
+    ]
+  },
+  "customer_profile": {
+    "name": "Yan Nair",
+    "nric": "S4126268H",
+    "email": "customer845@gmail.com",
+    "phone": "87688532",
+    "date_of_birth": "1989-09-18",
+    "address": {
+      "full_address": "Blk 38K Kembangan Street 37 #16-271, Singapore 469176",
+      "region": "East"
+    }
+  },
+  "policy_portfolio": [
+    {
+      "policy_id": "POL000001",
+      "type": "Home",
+      "status": "Cancelled",
+      "start_date": "2025-07-13",
+      "premium": {
+        "amount": 420.55,
+        "currency": "SGD",
+        "frequency": "Monthly"
+      },
+      "billing_history": [
+        { "bill_id": "BILL000001", "due_date": "2026-02-15", "status": "Paid" },
+        { "bill_id": "BILL000002", "due_date": "2025-08-09", "status": "Paid" },
+        { "bill_id": "BILL000003", "due_date": "2025-04-24", "status": "Paid" }
+      ]
+    },
+    {
+      "policy_id": "POL000353",
+      "type": "Health",
+      "status": "Cancelled",
+      "start_date": "2024-09-24",
+      "premium": {
+        "amount": 134.42,
+        "currency": "SGD",
+        "frequency": "Quarterly"
+      },
+      "billing_history": [
+        { "bill_id": "BILL000316", "due_date": "2025-09-09", "status": "Paid" },
+        { "bill_id": "BILL000325", "due_date": "2025-07-10", "status": "Paid" },
+        { "bill_id": "BILL000326", "due_date": "2025-04-15", "status": "Overdue" },
+        { "bill_id": "BILL000215", "due_date": "2025-01-05", "status": "Overdue" }
+      ]
+    }
+  ],
+  "claims_history": [
+    {
+      "claim_id": "CLM000000",
+      "date": "2024-11-25",
+      "associated_policy": "POL000353",
+      "amount": 3683.23,
+      "status": "Paid",
+      "description": "Property damage"
+    }
+  ]
+}

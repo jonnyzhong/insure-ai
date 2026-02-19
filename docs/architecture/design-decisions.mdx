@@ -1,0 +1,132 @@
+---
+title: "Design Decisions"
+description: "Key architectural choices and the reasoning behind them"
+---
+
+# Design Decisions
+
+This page documents the major design decisions made during development and the trade-offs considered.
+
+## 1. Supervisor-Worker vs. Sequential Chain
+
+**Decision:** Supervisor pattern with structured output routing.
+
+**Alternatives considered:**
+- Sequential chain (pass through all agents)
+- Round-robin agent selection
+- User-selected routing (buttons)
+
+**Reasoning:**
+- The supervisor makes a single LLM call with structured output (`RouterOutput`) to classify intent
+- Each specialist agent only sees the tools it needs, reducing tool confusion
+- Adding a new agent is as simple as adding a node + tool node + edges
+
+**Trade-off:** One extra LLM call per message (the supervisor), but it keeps agent prompts focused and prevents tool selection errors.
+
+## 2. FastAPI vs. LangServe
+
+**Decision:** Custom FastAPI server.
+
+**Reasoning:**
+- Full control over session management, CORS, error handling
+- Custom guardrail integration before the graph
+- Custom response shaping (agent detection, tool call extraction)
+- Report endpoint operates outside the agent workflow
+
+**Trade-off:** More boilerplate code, but more flexibility than LangServe's opinionated structure.
+
+## 3. In-Memory Sessions vs. Database
+
+**Decision:** Python dictionary for session storage.
+
+```python
+sessions: dict = {}
+```
+
+**Reasoning:**
+- Simple for a demo/prototype application
+- No external dependencies (Redis, PostgreSQL)
+- Conversation history is maintained across messages within a session
+
+**Trade-off:** Sessions are lost when the server restarts. Not suitable for production multi-instance deployments. See the [Production Checklist](/deployment/production-checklist) for recommended alternatives.
+
+## 4. SQLite vs. PostgreSQL
+
+**Decision:** SQLite with generated synthetic data.
+
+**Reasoning:**
+- Zero configuration — no server installation required
+- Self-contained — the database is a single file
+- `setup.py` generates 1,000 realistic customers with a single command
+- Sufficient for a single-user demo application
+
+**Trade-off:** No concurrent write support, no full-text search, not production-ready for multi-user deployments.
+
+## 5. Guardrails: Regex + LLM
+
+**Decision:** Two-layer validation with regex pre-filter and LLM semantic guard.
+
+**Reasoning:**
+- Regex catches obvious attacks (SQL injection, jailbreak patterns) with zero latency
+- LLM guard catches semantic attacks and off-topic messages that regex can't detect
+- If the LLM guard fails (API error), the system fails open (allows the message through) to avoid blocking legitimate users
+
+**Trade-off:** The LLM guard adds ~500ms latency and token cost per message.
+
+## 6. Report Engine: Dedicated Endpoint vs. Agent
+
+**Decision:** Separate `/api/report` endpoint, not routed through the agent supervisor.
+
+**Reasoning:**
+- Reports need deterministic data gathering (all policies, all billing, all claims)
+- Agent routing would add unnecessary LLM calls for a predictable workflow
+- Structured output (`ExecutiveSummary` Pydantic model) ensures consistent narrative format
+- Simpler error handling and faster execution
+
+**Trade-off:** Report generation cannot benefit from conversational context or follow-up questions.
+
+## 7. Frontend State: Zustand vs. Context vs. Redux
+
+**Decision:** Zustand with separate stores per domain.
+
+**Reasoning:**
+- Minimal boilerplate compared to Redux
+- No provider nesting required (unlike React Context)
+- Direct store access via `getState()` for non-React code (e.g., report caching logic)
+- Five stores keep concerns separated: auth, chat, report, UI, topics
+
+## 8. Charts: Recharts vs. Chart.js vs. D3
+
+**Decision:** Recharts for report visualizations.
+
+**Reasoning:**
+- Native React components (declarative API)
+- Built-in responsive containers
+- Supports the chart types needed: BarChart, PieChart
+- Good TypeScript support
+
+**Trade-off:** Larger bundle size than Chart.js, but avoids imperative canvas API.
+
+## 9. PDF Export: html2canvas vs. Puppeteer
+
+**Decision:** Client-side export with html2canvas + jsPDF.
+
+**Reasoning:**
+- No server-side rendering needed
+- Captures the actual rendered DOM including Recharts SVGs
+- User initiates export — no server load
+
+**Implementation note:** The export temporarily removes `overflow: hidden` from ancestor elements (ScrollArea viewport, Dialog container) to capture the full content, then restores styles after capture.
+
+**Trade-off:** Quality depends on the browser's rendering. Some CSS features may not capture perfectly.
+
+## 10. Authentication: Email-Only Login
+
+**Decision:** Simple email-based login with no password.
+
+**Reasoning:**
+- This is a demo application — security is demonstrated at the data access layer, not the login layer
+- The login establishes a `customer_id` that is used for all subsequent ownership checks
+- A silent "Who am I?" query runs at login to populate the conversation context
+
+**Trade-off:** Not suitable for production. See [Production Checklist](/deployment/production-checklist) for recommended auth implementations.

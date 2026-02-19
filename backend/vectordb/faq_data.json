@@ -1,0 +1,94 @@
+[
+  {
+    "question": "What is motor insurance?",
+    "answer": "Motor insurance, also known as car insurance, is mandatory coverage in Singapore protecting against liability for death or bodily injury to third parties."
+  },
+  {
+    "question": "What is NCD?",
+    "answer": "No Claim Discount (NCD) is an entitlement given to you if you have not made any claims for a year or more. In Singapore, it can go up to 50% for private cars (10% per year)."
+  },
+  {
+    "question": "What is PayNow?",
+    "answer": "PayNow is an instant funds transfer service in Singapore linked to your NRIC or Mobile Number, widely used for paying premiums or receiving claims."
+  },
+  {
+    "question": "What is GIRO?",
+    "answer": "GIRO is an automated electronic payment arrangement in Singapore used for recurring premium deductions directly from your bank account."
+  },
+  {
+    "question": "What is MAS?",
+    "answer": "The Monetary Authority of Singapore (MAS) is the central bank and financial regulatory authority that oversees the insurance industry in Singapore."
+  },
+  {
+    "question": "What is GIA?",
+    "answer": "The General Insurance Association of Singapore (GIA) represents the interests of general insurance companies in Singapore."
+  },
+  {
+    "question": "Can I use CPF for insurance?",
+    "answer": "Yes, CPF savings (MediSave) can be used for approved medical insurance like MediShield Life and Integrated Shield Plans. The Dependants' Protection Scheme (DPS) can also be paid via CPF."
+  },
+  {
+    "question": "What is DPS?",
+    "answer": "Dependants' Protection Scheme (DPS) is a term-life insurance scheme that provides basic financial protection for you and your family in the event of death, terminal illness, or total permanent disability."
+  },
+  {
+    "question": "What is COE?",
+    "answer": "Certificate of Entitlement (COE) represents the right to own a vehicle in Singapore for 10 years. High COE prices increase the market value of cars, which can increase insurance premiums."
+  },
+  {
+    "question": "What is Singpass?",
+    "answer": "Singpass is Singapore's trusted digital identity. You often use the Singpass App to verify your identity when logging into insurance portals or filing claims."
+  },
+  {
+    "question": "What is Third Party Only (TPO)?",
+    "answer": "TPO is the minimum legal requirement in Singapore. It covers only your liability to others (bodily injury/death/property damage) but NOT your own vehicle."
+  },
+  {
+    "question": "How do I file a claim?",
+    "answer": "To file a claim: 1) Report the incident to the police if required, 2) Gather evidence (photos, witness information), 3) Contact your insurance company within 24 hours, 4) Fill out the claim form with all details, 5) Submit required documents. Processing typically takes 2-4 weeks."
+  },
+  {
+    "question": "What is a deductible?",
+    "answer": "A deductible is the amount you pay out of pocket before your insurance coverage kicks in. For example, with a $500 deductible, if you have a $2,000 claim, you pay $500 and insurance covers $1,500."
+  },
+  {
+    "question": "How is my premium calculated?",
+    "answer": "Insurance premiums are calculated based on several factors: age and driving experience, claims history, vehicle type and value, coverage level, NCD status, occupation, and location."
+  },
+  {
+    "question": "What is health insurance?",
+    "answer": "Health insurance covers medical expenses including hospitalization, surgery, medication, and treatments. In Singapore, basic coverage is provided by MediShield Life, with optional Integrated Shield Plans for enhanced coverage."
+  },
+  {
+    "question": "What does life insurance cover?",
+    "answer": "Life insurance provides a death benefit to beneficiaries when the policyholder passes away. It can cover funeral expenses, outstanding debts, mortgage payments, children's education, and provide income replacement for dependents."
+  },
+  {
+    "question": "What is comprehensive coverage?",
+    "answer": "Comprehensive coverage protects against damage to your vehicle from non-collision events like theft, vandalism, fire, natural disasters, and falling objects. It's optional but recommended for newer vehicles."
+  },
+  {
+    "question": "Can I transfer my NCD?",
+    "answer": "Yes, in Singapore you can transfer your NCD between insurance companies when you switch. You can also transfer NCD from one vehicle to another, or from your name to an immediate family member's policy."
+  },
+  {
+    "question": "What is an excess in insurance?",
+    "answer": "Excess (also called deductible) is the first portion of any claim that you must pay yourself. There may be compulsory excess set by the insurer and voluntary excess you choose for lower premiums."
+  },
+  {
+    "question": "How do I update my contact details?",
+    "answer": "You can update your contact details by logging into your online account, calling our customer service hotline, or visiting any of our service centers. Please have your policy number and NRIC ready for verification."
+  },
+  {
+    "question": "What payment methods are accepted?",
+    "answer": "We accept various payment methods including Credit/Debit Cards, PayNow, GIRO (monthly installments), Bank Transfer, and cash payments at our service centers. GIRO is popular for spreading premium payments across the year."
+  },
+  {
+    "question": "How long does claim processing take?",
+    "answer": "Claim processing typically takes 2-4 weeks for straightforward cases. Complex claims involving investigations may take longer. You can track your claim status online or by calling our claims hotline."
+  },
+  {
+    "question": "What is home insurance?",
+    "answer": "Home insurance protects your home and belongings against risks like fire, theft, natural disasters, and water damage. It can cover the building structure (for homeowners) and/or contents (for renters)."
+  }
+]

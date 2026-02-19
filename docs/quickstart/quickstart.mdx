@@ -1,0 +1,118 @@
+---
+title: "Quickstart"
+description: "Get InsureAI running in 5 minutes"
+---
+
+# Quickstart
+
+Get the full application running locally in 5 minutes.
+
+## Prerequisites
+
+<Check>**Python** 3.10 or higher</Check>
+<Check>**Node.js** 18 or higher</Check>
+<Check>**npm** 9 or higher</Check>
+<Check>**OpenAI API Key** — [Get one here](https://platform.openai.com/api-keys)</Check>
+
+## Steps
+
+<Steps>
+  <Step title="Clone & Configure">
+    ```bash
+    git clone https://github.com/YOUR_USERNAME/insure-ai.git
+    cd insure-ai
+    cp .env.example .env
+    ```
+
+    Edit `.env` and add your OpenAI API key:
+
+    ```env
+    OPENAI_API_KEY=sk-your-key-here
+    LANGSMITH_API_KEY=your-key-here  # Optional
+    ```
+  </Step>
+
+  <Step title="Setup Backend">
+    ```bash
+    cd backend
+    python -m venv venv
+    source venv/bin/activate    # Windows: venv\Scripts\activate
+    pip install -r requirements.txt
+    ```
+  </Step>
+
+  <Step title="Initialize Data">
+    ```bash
+    # Generate database with 1,000 synthetic customers
+    python db/setup.py
+
+    # Initialize FAQ vector store
+    python -m vectordb.vector_db
+    ```
+
+    <Info>
+      `setup.py` creates an SQLite database with 1,000 customers, ~1,500 policies, ~5,000 billing records, ~300 claims, and vehicle details. This takes about 10 seconds.
+    </Info>
+  </Step>
+
+  <Step title="Start Backend Server">
+    ```bash
+    uvicorn api:app --reload --port 8000
+    ```
+
+    Verify it's running:
+
+    ```bash
+    curl http://localhost:8000/api/health
+    ```
+
+    Expected output:
+
+    ```json
+    {"status": "ok", "db_exists": true}
+    ```
+  </Step>
+
+  <Step title="Setup & Start Frontend">
+    Open a **new terminal**:
+
+    ```bash
+    cd frontend
+    npm install
+    npm run dev
+    ```
+  </Step>
+
+  <Step title="Use the Application">
+    Open your browser to **http://localhost:5173**
+
+    1. Click **Get Started** on the landing page
+    2. Search for a user in the login combobox (try typing "motor")
+    3. Select a user and click **Login**
+    4. Start chatting! Try these:
+       - `"What policies do I have?"`
+       - `"Do I owe anything?"`
+       - `"What is NCD?"`
+       - `"Generate report"`
+  </Step>
+</Steps>
+
+## Expected Result
+
+After logging in, you'll see:
+
+- A **chat interface** with a sidebar showing your name and policy type
+- **Agent badges** on AI responses indicating which specialist handled the query
+- **Tool call traces** you can expand to see exactly what database queries ran
+- An **Executive Report** button in the sidebar that generates a full dashboard
+
+## What's Next?
+
+<CardGroup cols={2}>
+  <Card title="Installation Guide" icon="download" href="/installation/installation">
+    Detailed setup with troubleshooting
+  </Card>
+  <Card title="Basic Usage" icon="message" href="/usage/basic-usage">
+    Learn all the chat features
+  </Card>
+</CardGroup>

@@ -1,0 +1,102 @@
+---
+title: "Config Reference"
+description: "Complete configuration reference for all settings"
+---
+
+# Configuration Reference
+
+## Backend Configuration
+
+### FastAPI Server (`api.py`)
+
+| Setting | Value | How to Change |
+|---------|-------|---------------|
+| Port | `8000` | `uvicorn api:app --port XXXX` |
+| Auto-reload | `True` | `uvicorn api:app --reload` (dev only) |
+| CORS Origins | `localhost:5173, localhost:3000` | Edit `allow_origins` array in `api.py` |
+| Session Storage | In-memory dict | Replace `sessions: dict` with Redis/DB |
+
+### LLM Configuration
+
+Three modules instantiate their own `ChatOpenAI`:
+
+| Module | Model | Temperature | Purpose |
+|--------|-------|-------------|---------|
+| `agent_supervisor.py` | `gpt-4o-mini` | `0` | Supervisor routing + agent responses |
+| `guardrails.py` | `gpt-4o-mini` | `0` | Input validation |
+| `report.py` | `gpt-4o-mini` | `0` | Executive summary narrative |
+
+To switch models, update the `model` parameter in each file:
+
+```python
+llm = ChatOpenAI(model="gpt-4o", temperature=0)
+```
+
+### Database
+
+| Setting | Value | Location |
+|---------|-------|----------|
+| Database path | `backend/db/insurance_support.db` | `DB_PATH` in each tool file |
+| Customer count | 1,000 | `db/setup.py` — hardcoded in data generation |
+| Policy types | Motor, Life, Health, Home, Travel | `db/setup.py` — `POLICY_TYPES` list |
+
+### ChromaDB
+
+| Setting | Value | Location |
+|---------|-------|----------|
+| Collection name | `insurance_faq` | `vectordb/vector_db.py` |
+| Persist directory | `backend/vectordb/chroma_faq_db/` | `vectordb/vector_db.py` |
+| FAQ source | `backend/vectordb/faq_data.json` | 22 entries |
+| Search results | Top 3 | `rag_tools.py` — `n_results=3` |
+
+### Guardrail Settings
+
+| Setting | Value | Location |
+|---------|-------|----------|
+| Context messages | Last 4 | `guardrails.py` — `recent_messages[-4:]` |
+| Content truncation | 200 chars | `guardrails.py` — `content[:200]` |
+| SQL injection patterns | `SELECT *, DROP TABLE, INSERT INTO, DELETE FROM` | `guardrails.py` — regex |
+| Jailbreak patterns | `ignore previous, system override` | `guardrails.py` — regex |
+| Fail behavior | Fail open (allow) | `guardrails.py` — exception handler |
+
+---
+
+## Frontend Configuration
+
+### API Client (`api/client.ts`)
+
+| Setting | Value | How to Change |
+|---------|-------|---------------|
+| Base URL | `http://localhost:8000` | Edit `baseURL` in `client.ts` |
+| Content-Type | `application/json` | Default header in `client.ts` |
+
+### React Query (`App.tsx`)
+
+| Setting | Value |
+|---------|-------|
+| Retry count | `1` |
+| Stale time | `5 minutes` (300,000 ms) |
+
+### Vite (`vite.config.ts`)
+
+| Setting | Value |
+|---------|-------|
+| Dev port | `5173` (default) |
+| Path alias | `@` → `./src` |
+| React plugin | `@vitejs/plugin-react` |
+
+### Topic Settings (localStorage)
+
+Suggested topics are stored in the browser's localStorage via the `topicsStore`. Default topics can be customized through the UI without code changes.
+
+---
+
+## File Paths Summary
+
+| Data | Path | Generated? | Git-ignored? |
+|------|------|-----------|-------------|
+| SQLite DB | `backend/db/insurance_support.db` | Yes (`setup.py`) | Yes |
+| ChromaDB | `backend/vectordb/chroma_faq_db/` | Yes (`vector_db.py`) | Yes |
+| FAQ source | `backend/vectordb/faq_data.json` | No (manual) | No |
+| Environment | `.env` | No (manual) | Yes |
+| Env template | `.env.example` | No (manual) | No |
